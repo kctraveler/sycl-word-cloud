@@ -5,19 +5,13 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include "../utils/utils.hpp"
 
 
 // TODO Decoder that takes a hash and returns the word.
 // TODO Find the top N words in the count array
 // TODO Refactor
 
-const std::string SPECIAL_CHARACTERS = " @#$%^&*[]!.?,;-";
-const size_t WORD_ID_RANGE = 50000;
-
-std::size_t hash(std::string word, size_t range){
-  size_t hash = std::hash<std::string>{}(word);
-  return hash % range;
-}
 
 std::map<size_t, short>  get_word_id_counts(std::vector<short> counts){
   std::map<size_t, short> hash_counts;
@@ -76,25 +70,12 @@ void write_results(std::string file_path, std::vector<short> counts){
     output_file << "Word ID: " << it->first << ", Count: " << it->second << std::endl;
     ++it;
   }
-  // for (short count : counts ){
-  //   output_file << std::to_string(count) << std::endl;
-  // }
   output_file.close();
 }
 
 
 
 int main(){
-  // // Shows what maximum index value is
-  // std::vector<short> temp_vect;
-  // std::cout << "Max Vector Size: " << temp_vect.max_size() 
-  //   <<  std::endl;
-
-  // // Try to populate a large vector
-  // size_t size = 1;
-  // std::vector<short> words(size, 0);
-  // words[size] = 1;
-  // std::cout << words[size] << std::endl;
 
   std::vector<short> words =read_file("./data/hamlet.txt");
   write_results("./data/processed_hamlet.txt", words);
