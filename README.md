@@ -5,6 +5,13 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 - Simple example [oneAPI Simple Add](https://github.com/oneapi-src/oneAPI-samples/tree/master/DirectProgramming/C%2B%2BSYCL/DenseLinearAlgebra/simple-add)
 - Previous repository for serial word cloud [kctraveler/caesar_cipher](https://github.com/kctraveler/caesar_cipher)
 
+### qsub Commands for reference
+- qsub -I -l nodes=1:gpu:ppn=2 -d .
+    - GPU node
+- qsub -I
+    - general interactive node
+    - Serial code ran  faster on GPU node than this one, GPU device slower for parallel than this one.
+
 ## ToDo:
 - [ ] Decode hashes
 - [ ] CLI
