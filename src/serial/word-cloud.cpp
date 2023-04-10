@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <map>
 #include "../utils/utils.hpp"
-
+#include <chrono>
 
 // TODO Decoder that takes a hash and returns the word.
 // TODO Find the top N words in the count array
@@ -52,26 +52,16 @@ std::vector<short> read_file(std::string file_path){
 
 
 
-void write_results(std::string file_path, std::vector<short> counts){
-  std::map<size_t, short> hash_counts = get_word_id_counts(counts);
-  std::ofstream output_file;
-  output_file.open(file_path);
-  std::map<size_t, short>::iterator it = hash_counts.begin();
-  while (it != hash_counts.end())
-  {
-    output_file << "Word ID: " << it->first << ", Count: " << it->second << std::endl;
-    ++it;
-  }
-  output_file.close();
-}
-
-
 
 int main(){
-
+  auto start = std::chrono::high_resolution_clock::now();
   std::vector<short> words =read_file("./data/hamlet.txt");
   write_results("./data/processed_hamlet.txt", words);
-  
+   auto end = std::chrono::high_resolution_clock::now();
+
+   std::chrono::duration<float> total_time = end - start;
+   printf("\n\nTOTAL TIME\t\t\t\t%f s\n", total_time.count());
+
 }
 
 
