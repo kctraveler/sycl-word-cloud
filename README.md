@@ -21,7 +21,7 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 #### Data Analysis
 - [ ] Investigate Profiling tools (VTune)
 - [ ] Parmater sweep max kernels and plot speedup
-    - env variable export DPCPP_CPU_NUM_CUS={N} can be used. 
+    - env variable export DPCPP_CPU_NUM_CUS={N} does not seem to work.
 - [ ] Increase data size and plot speedup.
     - Does GPU performance exceed CPU if counting the words in 100 copies of hamlet? 
     - Assume even with USM there is a penalty for data offload to GPU. Will increase in data help or will it just increase transfers. Maybe our task is not a good match for a GPU.
