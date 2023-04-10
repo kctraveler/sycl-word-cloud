@@ -56,7 +56,7 @@ std::vector<short> read_file(std::string file_path){
 int main(){
   auto start = std::chrono::high_resolution_clock::now();
   std::vector<short> words =read_file("./data/hamlet.txt");
-  write_results("./data/processed_hamlet.txt", words);
+  write_results("./data/original_processed_hamlet.txt", words);
    auto end = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> total_time = end - start;
