@@ -12,6 +12,7 @@ CTestTestfile.cmake
 _deps
 build/*
 bin/*
+data/*
 
 # Prerequisites
 *.d
