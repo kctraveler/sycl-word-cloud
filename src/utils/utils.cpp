@@ -12,7 +12,7 @@ std::size_t hash(std::string word, size_t range){
 std::map<size_t, short>  get_word_id_counts(std::vector<short> counts){
   std::map<size_t, short> hash_counts;
   for(size_t i = 0; i <  counts.size(); i++){
-    if(counts[i] > 0){
+    if(counts[i] != 0){
       hash_counts[i] = counts[i];
     }
   }

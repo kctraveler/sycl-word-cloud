@@ -8,6 +8,10 @@
 #include "../utils/utils.hpp"
 #include <chrono>
 
+#include <sycl/sycl.hpp>
+
+using namespace sycl;
+
 std::vector<size_t> hash_line(const std::string& str, const std::string& delimiters){
     std::vector<size_t> hashed_tokens = {};
     std::string token;
@@ -53,23 +57,66 @@ std::vector<short> count_words(std::vector<size_t> hashed_words){
 
 
 int main(){
+
+
     auto start = std::chrono::high_resolution_clock::now();
     auto hashed_words = tokenize_file("./data/hamlet.txt");
-    auto step1 = std::chrono::high_resolution_clock::now();
+    auto tokenize = std::chrono::high_resolution_clock::now();
     std::sort(hashed_words.begin(), hashed_words.end());
     auto sort_end = std::chrono::high_resolution_clock::now();
     auto counts = count_words(hashed_words);
-    auto step2 = std::chrono::high_resolution_clock::now();
-    //write_results("./data/parallel-ham-results.txt", counts);
+    auto serial_count = std::chrono::high_resolution_clock::now();
+    write_results("./data/serial-hamlet-results.txt", counts);
+    auto write_results = std::chrono::high_resolution_clock::now();
+
+    // BEGIN PARALLEL IMPLEMENTATION
+    // Use the same hashed words
+    auto start_parallel = std::chrono::high_resolution_clock::now();
+    queue q;
+    auto N = hashed_words.size();
+    size_t *data = malloc_shared<size_t>(N, q);
+    short *counts_malloc = malloc_shared<short>(WORD_ID_RANGE, q);
+
+    std::copy_n(hashed_words.begin(), N, data);
+    
+    q.parallel_for(range<1>(N), [=](id<1> i) {counts_malloc[data[i]] += 1;}).wait();
+    auto end_parallel = std::chrono::high_resolution_clock::now();
+    
+    auto start_second_write = std::chrono::high_resolution_clock::now();
+    std::map<size_t, short> hash_counts;
+    for(size_t i = 0; i < WORD_ID_RANGE; i++){
+        if (counts_malloc[i] != 0){
+            hash_counts[i] = counts_malloc[i];
+        }
+    }
+    std::string file_path = "./data/parallel-hamlet-results.txt";
+    std::ofstream output_file;
+    output_file.open(file_path);
+    std::map<size_t, short>::iterator it = hash_counts.begin();
+    while (it != hash_counts.end())
+    {
+        output_file << "Word ID: " << it->first << ", Count: " << it->second << std::endl;
+        ++it;
+    }
+    output_file.close();
+    auto end_second_write = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
 
+
     // Calcuate and report back durations
-    std::chrono::duration<float> total_duration = end - start;
-    std::chrono::duration<float> step1_duration = step1 - start;
-    std::chrono::duration<float> step2_duration = step2 - step1;
-    std::chrono::duration<float> sort_duration = sort_end - step1;
-    printf("Total Duration:\t%fs\n", total_duration.count());
-    printf("Tokenize File Duration:\t%fs\n", step1_duration.count());
-    printf("Count Words Duration:\t%fs\n", step2_duration.count());
-    printf("Sort Tokens Duration:\t%f s\n", sort_duration.count());
+    std::chrono::duration<float> tokenize_duration = tokenize - start;
+    std::chrono::duration<float> serial_count_duration = serial_count - sort_end;
+    std::chrono::duration<float> sort_duration = sort_end - tokenize;
+    std::chrono::duration<float> parallel_duration = end_parallel - start_parallel;
+    std::chrono::duration<float> write_file_duration = write_results - serial_count;
+    std::chrono::duration<float> second_file_write = end_second_write - start_second_write;
+    std::chrono::duration<float> total_time = end - start;
+    printf("Tokenize File Duration:\t\t\t%f s\n", tokenize_duration.count());
+    printf("Sort Tokens Duration:\t\t\t%f s\n", sort_duration.count());
+    printf("Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());
+    printf("Time to write to file (single file):\t%f s\n", write_file_duration.count());
+    printf("\nParallel Results on %s\n", q.get_device().get_info<info::device::name>().c_str());
+    printf("Parallel Count Duration:\t\t%f s\n", parallel_duration.count());
+    printf("Time to write parallel results:\t\t%f s\n", second_file_write.count());
+    printf("\n\nTOTAL TIME\t\t\t\t%f s\n", total_time.count());
 }
