@@ -57,9 +57,16 @@ std::vector<short> count_words(std::vector<size_t> hashed_words){
 
 
 int main(){
+
+    // TODO CLI these parameters with default values below
+    int num_windows = 1;
+    std::string input_path = "./data/hamlet.txt";
+    std::string par_out_path = "./data/parallel-hamlet-results.txt";
+    std::string seq_out_path = "./data/serial-hamlet-results.txt";
+
     // Shared Execution Steps
     auto start = std::chrono::high_resolution_clock::now();
-    auto hashed_words = tokenize_file("./data/hamlet.txt");
+    auto hashed_words = tokenize_file(input_path);
     auto tokenize = std::chrono::high_resolution_clock::now();
     std::sort(hashed_words.begin(), hashed_words.end());
     auto sort_end = std::chrono::high_resolution_clock::now();
@@ -67,7 +74,7 @@ int main(){
     // Serial Execution Steps
     auto counts = count_words(hashed_words);
     auto serial_count = std::chrono::high_resolution_clock::now();
-    write_results("./data/serial-hamlet-results.txt", counts);
+    write_results(seq_out_path, counts);
     auto write_results = std::chrono::high_resolution_clock::now();
 
     // Parallel Execution Steps
@@ -91,9 +98,8 @@ int main(){
             hash_counts[i] = counts_malloc[i];
         }
     }
-    std::string file_path = "./data/parallel-hamlet-results.txt";
     std::ofstream output_file;
-    output_file.open(file_path);
+    output_file.open(par_out_path);
     std::map<size_t, short>::iterator it = hash_counts.begin();
     while (it != hash_counts.end())
     {
