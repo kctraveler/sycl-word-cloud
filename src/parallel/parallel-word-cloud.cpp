@@ -60,8 +60,16 @@ int main(){
     // Shared Execution Steps
     auto start = std::chrono::high_resolution_clock::now();
     auto hashed_words = tokenize_file("./data/hamlet.txt");
+    auto orig_size = hashed_words.size();
+    int nCopies = 1000;
+    auto new_size = orig_size * nCopies;
+    
+    hashed_words.reserve(new_size);
+    for (size_t i = 0; i < 15; i++) {
+        hashed_words.insert(hashed_words.end(), hashed_words.begin(), hashed_words.end()); // insert the contents of the vector at the end
+    }
     auto tokenize = std::chrono::high_resolution_clock::now();
-    std::sort(hashed_words.begin(), hashed_words.end());
+    //std::sort(hashed_words.begin(), hashed_words.end());
     auto sort_end = std::chrono::high_resolution_clock::now();
 
     // Serial Execution Steps
@@ -72,7 +80,7 @@ int main(){
 
     // Parallel Execution Steps
     // Parallel count
-    auto start_parallel = std::chrono::high_resolution_clock::now();
+    
     queue q;
     auto N = hashed_words.size();
     size_t *data = malloc_shared<size_t>(N, q);
@@ -80,6 +88,7 @@ int main(){
     std::copy_n(hashed_words.begin(), N, data);
     auto nKernels = q.get_device().get_info<cl::sycl::info::device::max_compute_units>();
     std::string device_name = q.get_device().get_info<sycl::info::device::name>();
+    auto start_parallel = std::chrono::high_resolution_clock::now();
     q.parallel_for(range<1>(N), [=](id<1> i) {counts_malloc[data[i]] += 1;}).wait();
     auto end_parallel = std::chrono::high_resolution_clock::now();
     

@@ -18,6 +18,7 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 - [ ] CLI (File path, max kernels)
 - [ ] Identify further optimizations. Particularly result output
     - Look at different methods in DPL etc to filter max results
+- [ ] Move to buffers for DPCPP
 #### Data Analysis
 - [ ] Investigate Profiling tools (VTune)
 - [ ] Parmater sweep max kernels and plot speedup
