@@ -9,7 +9,8 @@
 #include <chrono>
 #include <sycl/sycl.hpp>
 #include <CL/sycl.hpp>
-
+#include "CLI/CLI.hpp"
+#include "fmt/format.h"
 using namespace sycl;
 
 
@@ -17,12 +18,26 @@ using namespace sycl;
 
 
 
-int main(){
+//int main(){
+int main(int argc, char* argv[]) {
 
     // TODO CLI these parameters with default values below
     std::string input_path = "./data/hamlet.txt";
+    app.add_option("-i,--input", i, "Input Path");
+
     std::string par_out_path = "./data/parallel-hamlet-results.txt";
+            app.add_option("-p,--parallel", p, "Parallel Output Path");
+
     std::string seq_out_path = "./data/serial-hamlet-results.txt";
+        app.add_option("-s,--seq", s, "Seq Output Path");
+
+    // Parse the command-line arguments
+    CLI11_PARSE(app, argc, argv);
+    // Print the parsed arguments
+        fmt::print("Parsed arguments:\n");
+        fmt::print("  input: {}\n", i);
+        fmt::print("  parallel: {}\n", p);
+        fmt::print("  seq: {}\n", s);
 
     // Shared Execution Steps
     auto start = std::chrono::high_resolution_clock::now();
