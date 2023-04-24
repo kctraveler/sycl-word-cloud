@@ -20,6 +20,7 @@ using namespace sycl;
 
 //int main(){
 int main(int argc, char* argv[]) {
+    CLI::App app{"Parallel Word Cloud OneAPI"};
 
     // TODO CLI these parameters with default values below
     std::string input_path = "./data/hamlet.txt";
