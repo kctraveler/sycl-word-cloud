@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <map>
 
-const int WINDOW_SIZE = 10000;
+const int WINDOW_SIZE = 1000;
 
 std::vector<std::map<int, short>> count_words(std::vector<int> hashed_words){
     std::vector<std::map<int, short>> seq_windows{};
@@ -32,16 +32,18 @@ int main(){
     std::string par_out_path = "./data/parallel-hamlet-results.txt";
     std::string seq_out_path = "./data/serial-hamlet-results.txt";
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start_tokenize = std::chrono::high_resolution_clock::now();
     auto hashed_words = tokenize_file(input_path);
-    auto tokenize = std::chrono::high_resolution_clock::now();
+    auto end_tokenize = std::chrono::high_resolution_clock::now();
 
     // Serial Execution Steps
+    auto start_serial = std::chrono::high_resolution_clock::now();
     auto counts = count_words(hashed_words);
-    std::cout << "Other Stats" << std::endl;
-    std::cout << hashed_words.size() << std::endl;
-    std::cout << counts.size() << std::endl;
-    auto serial_count = std::chrono::high_resolution_clock::now();
-    
-   
+    auto end_serial = std::chrono::high_resolution_clock::now();
+
+
+    std::chrono::duration<float> tokenize_duration = end_tokenize - start_tokenize;
+    std::chrono::duration<float> serial_count_duration = start_serial - end_serial;
+    printf("Tokenize File Duration:\t\t\t%f s\n", tokenize_duration.count());
+    printf("Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());
 }
