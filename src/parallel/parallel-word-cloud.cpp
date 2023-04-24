@@ -12,8 +12,8 @@
 
 using namespace sycl;
 
-std::vector<size_t> hash_line(const std::string& str, const std::string& delimiters){
-    std::vector<size_t> hashed_tokens = {};
+std::vector<int> hash_line(const std::string& str, const std::string& delimiters){
+    std::vector<int> hashed_tokens = {};
     std::string token;
     std::stringstream ss(str);
     while(std::getline(ss, token)){
@@ -31,15 +31,15 @@ std::vector<size_t> hash_line(const std::string& str, const std::string& delimit
     return hashed_tokens;
 }
 
-std::vector<size_t> tokenize_file(std::string file_path){
+std::vector<int> tokenize_file(std::string file_path){
     std::fstream words_file;
-    std::vector<size_t> hashed_words = {};
+    std::vector<int> hashed_words = {};
     words_file.open(file_path);
     if (words_file.is_open()){
         std::string line;
         while(getline(words_file, line)){
             std::transform(line.begin(), line.end(), line.begin(),::toupper);
-            std::vector<size_t> hashed_line = hash_line(line, SPECIAL_CHARACTERS);
+            std::vector<int> hashed_line = hash_line(line, SPECIAL_CHARACTERS);
             hashed_words.insert(hashed_words.end(), hashed_line.begin(), hashed_line.end());
         }
     }
@@ -47,9 +47,9 @@ std::vector<size_t> tokenize_file(std::string file_path){
     return hashed_words;
 }
 
-std::vector<short> count_words(std::vector<size_t> hashed_words){
+std::vector<short> count_words(std::vector<int> hashed_words){
     std::vector<short> counts(WORD_ID_RANGE, 0);
-    for(size_t hash : hashed_words){
+    for(int hash : hashed_words){
         counts[hash] += 1;
     }
     return counts;
@@ -68,7 +68,7 @@ int main(){
     auto start = std::chrono::high_resolution_clock::now();
     auto hashed_words = tokenize_file(input_path);
     auto tokenize = std::chrono::high_resolution_clock::now();
-    std::sort(hashed_words.begin(), hashed_words.end());
+    //std::sort(hashed_words.begin(), hashed_words.end());
     auto sort_end = std::chrono::high_resolution_clock::now();
 
     // Serial Execution Steps
@@ -82,25 +82,39 @@ int main(){
     auto start_parallel = std::chrono::high_resolution_clock::now();
     queue q;
     auto N = hashed_words.size();
-    size_t *data = malloc_shared<size_t>(N, q);
-    short *counts_malloc = malloc_shared<short>(WORD_ID_RANGE, q);
-    std::copy_n(hashed_words.begin(), N, data);
+    buffer<int> word_hash_buff{hashed_words};
+    auto counts_vector = std::vector<short>(WORD_ID_RANGE, 0);
+    buffer<short> counts_buff{counts_vector};
+    auto r = range<1>(N);
+    //auto *data = malloc_shared<int>(N, q);
+    //short *counts_malloc = malloc_shared<short>(WORD_ID_RANGE, q);
+    //std::copy_n(hashed_words.begin(), N, data);
     auto nKernels = q.get_device().get_info<cl::sycl::info::device::max_compute_units>();
     std::string device_name = q.get_device().get_info<sycl::info::device::name>();
-    q.parallel_for(range<1>(N), [=](id<1> i) {counts_malloc[data[i]] += 1;}).wait();
+    // q.parallel_for(range<1>(N), [=](id<1> i) {counts_malloc[data[i]] += 1;}).wait();
+    q.submit([&](handler& h){
+        accessor in{word_hash_buff, h, read_only};
+        accessor out{counts_buff, h, write_only, no_init};
+        h.parallel_for(r, [=](id<1> i) {
+            out[in[i]] += 1;
+        });
+    });
+
     auto end_parallel = std::chrono::high_resolution_clock::now();
     
     // Create map and write results to file.
     auto start_second_write = std::chrono::high_resolution_clock::now();
-    std::map<size_t, short> hash_counts;
-    for(size_t i = 0; i < WORD_ID_RANGE; i++){
-        if (counts_malloc[i] != 0){
-            hash_counts[i] = counts_malloc[i];
+    host_accessor counts_acc{counts_buff, read_only};
+    std::map<int, short> hash_counts;
+    for(int i = 0; i < WORD_ID_RANGE; i++){
+        if (counts_acc[i] != 0){
+            hash_counts[i] = counts_acc[i];
         }
     }
+    
     std::ofstream output_file;
     output_file.open(par_out_path);
-    std::map<size_t, short>::iterator it = hash_counts.begin();
+    std::map<int, short>::iterator it = hash_counts.begin();
     while (it != hash_counts.end())
     {
         output_file << "Word ID: " << it->first << ", Count: " << it->second << std::endl;
