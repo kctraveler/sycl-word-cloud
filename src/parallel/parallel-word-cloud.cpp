@@ -24,21 +24,26 @@ int main(int argc, char* argv[]) {
 
     // TODO CLI these parameters with default values below
     std::string input_path = "./data/hamlet.txt";
-    app.add_option("-i,--input", i, "Input Path");
+    app.add_option("-i,--input", input_path, "Input Path");
 
     std::string par_out_path = "./data/parallel-hamlet-results.txt";
-            app.add_option("-p,--parallel", p, "Parallel Output Path");
+            app.add_option("-p,--parallel", par_out_path, "Parallel Output Path");
 
     std::string seq_out_path = "./data/serial-hamlet-results.txt";
-        app.add_option("-s,--seq", s, "Seq Output Path");
+        app.add_option("-s,--seq", seq_out_path, "Seq Output Path");
+
+    int WINDOW_SIZE = 10000;
+        app.add_option("-w,--window", WINDOW_SIZE, "Window Size");
 
     // Parse the command-line arguments
     CLI11_PARSE(app, argc, argv);
     // Print the parsed arguments
         fmt::print("Parsed arguments:\n");
-        fmt::print("  input: {}\n", i);
-        fmt::print("  parallel: {}\n", p);
-        fmt::print("  seq: {}\n", s);
+        fmt::print("  input: {}\n", input_path);
+        fmt::print("  parallel: {}\n", par_out_path);
+        fmt::print("  seq: {}\n", seq_out_path);
+        fmt::print("  window: {}\n", WINDOW_SIZE);
+
 
     // Shared Execution Steps
     auto start = std::chrono::high_resolution_clock::now();
