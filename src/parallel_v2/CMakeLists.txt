@@ -7,7 +7,7 @@ add_executable(
     ../utils/utils.cpp
 )
 
-target_link_libraries(sycl-word-cloud PRIVATE CLI11::CLI11 fmt::fmt)
+target_link_libraries(v2 PRIVATE CLI11::CLI11 fmt::fmt)
 
 set_target_properties(v2 PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS}")
 set_target_properties(v2 PROPERTIES LINK_FLAGS "${LINK_FLAGS}")

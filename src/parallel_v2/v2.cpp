@@ -11,10 +11,11 @@
 #include <algorithm>
 #include <map>
 #include <CL/sycl.hpp>
+#include "CLI/CLI.hpp"
+#include "fmt/format.h"
 
-const int WINDOW_SIZE = 10000;
 
-std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words){
+std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words, int WINDOW_SIZE){
     std::vector<std::map<int, short>> seq_windows{};
     for (int i = 0; i <= hashed_words.size() / WINDOW_SIZE; i += 1){
         std::vector<short> window_counts(WORD_ID_RANGE, 0);
@@ -29,7 +30,7 @@ std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words)
    return seq_windows;
 }
 
-void sub_buffer_count_words(std::vector<int> int_hashed_words){
+void sub_buffer_count_words(std::vector<int> int_hashed_words, int WINDOW_SIZE){
     // Got the error message below when trying to use vector of int after a few iterations. 
     // Commented lines related to the error that can be swapped to go back to int for future investigation.
     // Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment
@@ -111,14 +112,14 @@ int main(int argc, char* argv[]) {
 
     // Windowed Serial Execution Steps
     auto start_serial = std::chrono::high_resolution_clock::now();
-    //auto counts = seq_count_words(hashed_words);
+    //auto counts = seq_count_words(hashed_words, WINDOW_SIZE);
     auto end_serial = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> serial_count_duration = end_serial - start_serial;
     printf("Seq Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());
 
     // Windowed Parallel Execution Steps
     auto start_par = std::chrono::high_resolution_clock::now();
-    sub_buffer_count_words(hashed_words);
+    sub_buffer_count_words(hashed_words, WINDOW_SIZE);
     auto end_par = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> par_count_duration = end_par - start_par;
     printf("Parallel Count Words Duration:\t\t\t%f s\n", par_count_duration.count());
