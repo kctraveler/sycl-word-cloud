@@ -33,31 +33,49 @@ void sub_buffer_count_words(std::vector<int> int_hashed_words){
     // Got the error message below when trying to use vector of int after a few iterations. 
     // Commented lines related to the error that can be swapped to go back to int for future investigation.
     // Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment
-    std::vector<size_t> hashed_words(int_hashed_words.begin(), int_hashed_words.end());
+    std::vector<size_t> hashed_words(int_hashed_words.begin(), int_hashed_words.end()); // change back to size_t
     //std::vector<int> hashed_words{int_hashed_words.begin(), int_hashed_words.end() }; // base address alignment error
+
     sycl::queue q;
     //sycl::buffer<int> b_hash_words{hashed_words};// base address alignment error
     sycl::buffer<size_t> b_hash_words{hashed_words}; 
     int N = hashed_words.size();
-    int num_sub_buffs = N / WINDOW_SIZE;
-    for (int i = 0; i <= num_sub_buffs; i++){
+    size_t num_sub_buffs = N / WINDOW_SIZE + 1;
+    sycl::buffer<int, 2> results(sycl::range{num_sub_buffs, WORD_ID_RANGE});
+    std::cout << "BufferSize  " << b_hash_words.size() << std::endl;
+    for (size_t i = 0; i < num_sub_buffs; i++){
         size_t start = i * WINDOW_SIZE;
         size_t end = WINDOW_SIZE;
-        std::cout << "BufferSize  " << b_hash_words.size() << std::endl;
         std::cout << "Start  " << start << std::endl;
+        // limits last window to remaining elements
         if (end + start >= N) {
             end = N - start;
         }
-        std::cout << "End " << sycl::range{end}.size() << std::endl;
-        //sycl::buffer<int> sub_buff(b_hash_words, start, sycl::range{end}); 
-        sycl::buffer<size_t> sub_buff(b_hash_words, start, sycl::range{end}); //base address alignment error
+        std::cout << "Range Size " << end << std::endl;
+        //sycl::buffer<int> sub_buff(b_hash_words, start, sycl::range{end}); //base address alignment error
+        sycl::buffer<size_t> sub_buff(b_hash_words, start, sycl::range{end}); 
+        // Using a sub buffer here was causing errors and not writing back to the original or something.
+        //sycl::buffer<int, 2> sub_results(results, sycl::id{i, 0}, sycl::range{1, WORD_ID_RANGE});
         q.submit([&](sycl::handler& h){
             sycl::accessor in{sub_buff, h, sycl::read_only};
-            h.parallel_for(WINDOW_SIZE, [=](sycl::id<1> i) {
-                int result = in[i] + 1;
+            sycl::accessor out{results, h};
+            h.parallel_for(end, [=](sycl::id<1> idx) {
+                out[i][in[idx]] += 1;
             });
-        }).wait();
+        });
+        
     }
+    sycl::host_accessor counts(results, sycl::read_only);
+    for (int i = 0; i < num_sub_buffs; i++){
+        for (int j = 0; hashed_words.size(); j++){
+            if (counts[i][hashed_words[j]] > 0 ){
+                std::cout << "Window: " << i;
+                std::cout << " Smallest word ID found: " << hashed_words[j];
+                std::cout << " Count: " << counts[i][hashed_words[j]] << std::endl;
+                break;
+            }
+        }    
+    }  
 }
 
 
