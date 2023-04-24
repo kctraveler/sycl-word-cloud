@@ -49,6 +49,7 @@ void sub_buffer_count_words(std::vector<int> int_hashed_words, int WINDOW_SIZE){
     // Got the error message below when trying to use vector of int after a few iterations. 
     // Commented lines related to the error that can be swapped to go back to int for future investigation.
     // Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment
+        // STILL GETTING ERROR at certain window sizes. May not have been data type afterall.
     std::vector<size_t> hashed_words(int_hashed_words.begin(), int_hashed_words.end()); // change back to size_t
     //std::vector<int> hashed_words{int_hashed_words.begin(), int_hashed_words.end() }; // base address alignment error
 
@@ -127,7 +128,7 @@ int main(int argc, char* argv[]) {
 
     // Windowed Serial Execution Steps
     auto start_serial = std::chrono::high_resolution_clock::now();
-    //auto counts = seq_count_words(hashed_words, WINDOW_SIZE);
+    auto counts = seq_count_words(hashed_words, WINDOW_SIZE);
     auto end_serial = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> serial_count_duration = end_serial - start_serial;
     printf("Seq Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());

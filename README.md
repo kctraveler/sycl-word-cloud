@@ -1,41 +1,23 @@
 # sycl-word-cloud
 Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 
-## Working Notes:
-- Simple example [oneAPI Simple Add](https://github.com/oneapi-src/oneAPI-samples/tree/master/DirectProgramming/C%2B%2BSYCL/DenseLinearAlgebra/simple-add)
-- Previous repository for serial word cloud [kctraveler/caesar_cipher](https://github.com/kctraveler/caesar_cipher)
-
-### qsub Commands for reference
+## Running the code
+- Uses oneAPI and runs on Intel Dev Cloud
+- Final iteration is on the v2 target
+### qsub Commands for different node types
 - qsub -I -l nodes=1:gpu:ppn=2 -d .
     - GPU node
 - qsub -I
     - general interactive node
     - Serial code ran  faster on GPU node than this one, GPU device slower for parallel than this one.
 
-## ToDo:
-#### Functionality
-- [ ] Decode hashes
-- [ ] CLI (File path, max kernels)
-- [ ] Identify further optimizations. Particularly result output
-    - Look at different methods in DPL etc to filter max results
-#### Data Analysis
-- [ ] Investigate Profiling tools (VTune)
-- [ ] Parmater sweep max kernels and plot speedup
-    - env variable export DPCPP_CPU_NUM_CUS={N} does not seem to work.
-- [ ] Increase data size and plot speedup.
-    - Does GPU performance exceed CPU if counting the words in 100 copies of hamlet? 
-    - Assume even with USM there is a penalty for data offload to GPU. Will increase in data help or will it just increase transfers. Maybe our task is not a good match for a GPU.
-
-
 # Results and Observations
-### General Notes
-- Parallel seems way faster, however so does creating the map and writing to a file
-    - could this observation be the result of using a malloc array as opposed to vector?
-    - still have to copy from vector to malloc array. That step is included in the parallel timer. Interesting how it doesn't slow things down
-    - setting max kernels may allow us to observe how much of the speedup is coming from a potentially more performant data structure/access.
+## Version One Notes (Target sycl-word-cloud)
+- Started with Unified shared memory, very easy and saw significant speedup in the portion doing the counting
+- Moved to buffers and accessors and performance got significantly slower
 
-
-### Timing Results (qSub -I basic node)
+### Timing Results (CPU Node)
+#### Original implementation with USM
 | Inteval | Time |
 | --- | --- |
 | Tokenize file and hash | .011 seconds |
@@ -43,3 +25,39 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 | Write serial data from vector | 5.61 seconds |
 | Parallel count tokens | .247 seconds |
 | Write parallel results from malloc | 1.650 seconds |
+
+## Version Two Notes (Target v2)
+- Added windowed results for both seq and parallel
+- Sub buffers to divide work of input by window range
+- 2D buffer for the output where outer dimension is the window and inner is the count vector
+- Had troulble using sub buffer of 2D to get a single dimension. 
+    - Eliminated sub buffer and did global accessor. 
+    - Reading sub buffer allows multiple queues to work on the buffer at the same time
+- Probably should make the use of a map on a filtered output on both
+
+### Timing Results (CPU Node)
+| Interval | Time (Seconds) |
+| --- | --- |
+| Tokenize File | .009 |
+| Sequential Windowed* Count | 20.07 |
+| Parallel Windowed* Count | 0.245 |
+\* WINDOW_SIZE = 10,000
+
+### Questions unanswered
+- Did it ever need subbuffers or could we have partitioned the range someother way. (Partitioners?)
+- Could we have tried to do the input the same as the output. Would either option limit the ability for simultaneous kernals to process each window. 
+- Is their a chance that we are doing any simultaneous processing in current setup or is the q.submit blocking the outer loop. Probably is I would think. 
+- Why are there errors at certain window sizes pertaining to the memory base address alignment and sub buffer creation.
+    - Multiples of 10,000 seem to work well
+    - Interestingly the final section doesn't have issues and is an odd size
+- Are the start and ranges inclusive, are we missig any words when we partition the subbuffer?
+
+## ToDo:
+#### Functionality
+- [ ] Decode hashes
+- [x] CLI (File path, max kernels)
+- [x] Identify further optimizations. Particularly result output
+    - Working find with large output arrays with 4 windows at least
+- [ ] Update verision 2 seq to remove the map creation or add map creation to par
+#### Data Analysis
+- [ ] Investigate Profiling tools (VTune)
