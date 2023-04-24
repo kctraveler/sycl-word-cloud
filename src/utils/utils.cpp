@@ -31,3 +31,38 @@ void write_results(std::string file_path, std::vector<short> counts){
   }
   output_file.close();
 }
+
+std::vector<int> hash_line(const std::string& str, const std::string& delimiters){
+    std::vector<int> hashed_tokens = {};
+    std::string token;
+    std::stringstream ss(str);
+    while(std::getline(ss, token)){
+        size_t start = 0, end = 0;
+        while ((end = token.find_first_of(delimiters, start)) != std::string::npos){
+            if (end != start) {
+                hashed_tokens.push_back(hash(token.substr(start, end - start), WORD_ID_RANGE));
+            }
+            start = end + 1;
+        }
+        if(start < token.size()) {
+            hashed_tokens.push_back(hash(token.substr(start, end - start), WORD_ID_RANGE));
+        }
+    }
+    return hashed_tokens;
+}
+
+std::vector<int> tokenize_file(std::string file_path){
+    std::fstream words_file;
+    std::vector<int> hashed_words = {};
+    words_file.open(file_path);
+    if (words_file.is_open()){
+        std::string line;
+        while(getline(words_file, line)){
+            std::transform(line.begin(), line.end(), line.begin(),::toupper);
+            std::vector<int> hashed_line = hash_line(line, SPECIAL_CHARACTERS);
+            hashed_words.insert(hashed_words.end(), hashed_line.begin(), hashed_line.end());
+        }
+    }
+    words_file.close();
+    return hashed_words;
+}

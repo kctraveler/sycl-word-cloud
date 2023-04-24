@@ -12,40 +12,7 @@
 
 using namespace sycl;
 
-std::vector<int> hash_line(const std::string& str, const std::string& delimiters){
-    std::vector<int> hashed_tokens = {};
-    std::string token;
-    std::stringstream ss(str);
-    while(std::getline(ss, token)){
-        size_t start = 0, end = 0;
-        while ((end = token.find_first_of(delimiters, start)) != std::string::npos){
-            if (end != start) {
-                hashed_tokens.push_back(hash(token.substr(start, end - start), WORD_ID_RANGE));
-            }
-            start = end + 1;
-        }
-        if(start < token.size()) {
-            hashed_tokens.push_back(hash(token.substr(start, end - start), WORD_ID_RANGE));
-        }
-    }
-    return hashed_tokens;
-}
 
-std::vector<int> tokenize_file(std::string file_path){
-    std::fstream words_file;
-    std::vector<int> hashed_words = {};
-    words_file.open(file_path);
-    if (words_file.is_open()){
-        std::string line;
-        while(getline(words_file, line)){
-            std::transform(line.begin(), line.end(), line.begin(),::toupper);
-            std::vector<int> hashed_line = hash_line(line, SPECIAL_CHARACTERS);
-            hashed_words.insert(hashed_words.end(), hashed_line.begin(), hashed_line.end());
-        }
-    }
-    words_file.close();
-    return hashed_words;
-}
 
 std::vector<short> count_words(std::vector<int> hashed_words){
     std::vector<short> counts(WORD_ID_RANGE, 0);
@@ -59,7 +26,6 @@ std::vector<short> count_words(std::vector<int> hashed_words){
 int main(){
 
     // TODO CLI these parameters with default values below
-    int num_windows = 1;
     std::string input_path = "./data/hamlet.txt";
     std::string par_out_path = "./data/parallel-hamlet-results.txt";
     std::string seq_out_path = "./data/serial-hamlet-results.txt";
@@ -83,7 +49,7 @@ int main(){
     queue q;
     auto N = hashed_words.size();
     buffer<int> word_hash_buff{hashed_words};
-    auto counts_vector = std::vector<short>(WORD_ID_RANGE, 0);
+    auto counts_vector = std::vector<short>(WORD_ID_RANGE);
     buffer<short> counts_buff{counts_vector};
     auto r = range<1>(N);
     //auto *data = malloc_shared<int>(N, q);
