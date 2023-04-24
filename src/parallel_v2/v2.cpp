@@ -15,8 +15,23 @@
 #include "fmt/format.h"
 
 
-std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words, int WINDOW_SIZE){
-    std::vector<std::map<int, short>> seq_windows{};
+// std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words, int WINDOW_SIZE){
+//     std::vector<std::map<int, short>> seq_windows{};
+//     for (int i = 0; i <= hashed_words.size() / WINDOW_SIZE; i += 1){
+//         std::vector<short> window_counts(WORD_ID_RANGE, 0);
+//         int start = i * WINDOW_SIZE;
+//         int end = start + WINDOW_SIZE;
+//         for (int j = start; j < end && j < hashed_words.size(); j++){
+//             window_counts[hashed_words[j]] += 1;
+//         }
+//         auto count_map = get_word_id_counts(window_counts);
+//         seq_windows.push_back(count_map);
+//     }
+//    return seq_windows;
+// }
+
+std::vector<std::vector<short>> seq_count_words(std::vector<int> hashed_words, int WINDOW_SIZE){
+    std::vector<std::vector<short>> seq_windows{};
     for (int i = 0; i <= hashed_words.size() / WINDOW_SIZE; i += 1){
         std::vector<short> window_counts(WORD_ID_RANGE, 0);
         int start = i * WINDOW_SIZE;
@@ -24,8 +39,8 @@ std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words,
         for (int j = start; j < end && j < hashed_words.size(); j++){
             window_counts[hashed_words[j]] += 1;
         }
-        auto count_map = get_word_id_counts(window_counts);
-        seq_windows.push_back(count_map);
+        //auto count_map = get_word_id_counts(window_counts);
+        seq_windows.push_back(window_counts);
     }
    return seq_windows;
 }
