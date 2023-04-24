@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
 
     // Windowed Serial Execution Steps
     auto start_serial = std::chrono::high_resolution_clock::now();
-    //auto counts = seq_count_words(hashed_words, WINDOW_SIZE);
+    auto counts = seq_count_words(hashed_words, WINDOW_SIZE);
     auto end_serial = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> serial_count_duration = end_serial - start_serial;
     printf("Seq Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());
