@@ -78,11 +78,29 @@ void sub_buffer_count_words(std::vector<int> int_hashed_words){
     }  
 }
 
+int main(int argc, char* argv[]) {
+    CLI::App app{"Parallel Word Cloud V2 OneAPI"};
 
-int main(){
+    // TODO CLI these parameters with default values below
     std::string input_path = "./data/hamlet.txt";
+    app.add_option("-i,--input", input_path, "Input Path");
+
     std::string par_out_path = "./data/parallel-hamlet-results.txt";
+            app.add_option("-p,--parallel", par_out_path, "Parallel Output Path");
+
     std::string seq_out_path = "./data/serial-hamlet-results.txt";
+        app.add_option("-s,--seq", seq_out_path, "Seq Output Path");
+
+    int WINDOW_SIZE = 10000;
+        app.add_option("-w,--window", WINDOW_SIZE, "Window Size");
+
+    // Parse the command-line arguments
+    CLI11_PARSE(app, argc, argv);
+    // Print the parsed arguments
+        fmt::print("Parsed arguments:\n");
+        fmt::print("  input: {}\n", input_path);
+        fmt::print("  parallel: {}\n", par_out_path);
+        fmt::print("  seq: {}\n", seq_out_path);
 
     //Tokenize File with word IDs
     auto start_tokenize = std::chrono::high_resolution_clock::now();
