@@ -13,7 +13,13 @@
 #include "fmt/format.h"
 using namespace sycl;
 
-
+std::vector<short> count_words(std::vector<int> hashed_words){
+    std::vector<short> counts(WORD_ID_RANGE, 0);
+    for(int hash : hashed_words){
+        counts[hash] += 1;
+    }
+    return counts;
+}
 
 
 

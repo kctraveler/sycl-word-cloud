@@ -10,10 +10,11 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include <CL/sycl.hpp>
 
 const int WINDOW_SIZE = 10000;
 
-std::vector<std::map<int, short>> count_words(std::vector<int> hashed_words){
+std::vector<std::map<int, short>> seq_count_words(std::vector<int> hashed_words){
     std::vector<std::map<int, short>> seq_windows{};
     for (int i = 0; i <= hashed_words.size() / WINDOW_SIZE; i += 1){
         std::vector<short> window_counts(WORD_ID_RANGE, 0);
@@ -27,6 +28,38 @@ std::vector<std::map<int, short>> count_words(std::vector<int> hashed_words){
     }
    return seq_windows;
 }
+
+void sub_buffer_count_words(std::vector<int> int_hashed_words){
+    // Got the error message below when trying to use vector of int after a few iterations. 
+    // Commented lines related to the error that can be swapped to go back to int for future investigation.
+    // Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment
+    std::vector<size_t> hashed_words(int_hashed_words.begin(), int_hashed_words.end());
+    //std::vector<int> hashed_words{int_hashed_words.begin(), int_hashed_words.end() }; // base address alignment error
+    sycl::queue q;
+    //sycl::buffer<int> b_hash_words{hashed_words};// base address alignment error
+    sycl::buffer<size_t> b_hash_words{hashed_words}; 
+    int N = hashed_words.size();
+    int num_sub_buffs = N / WINDOW_SIZE;
+    for (int i = 0; i <= num_sub_buffs; i++){
+        size_t start = i * WINDOW_SIZE;
+        size_t end = WINDOW_SIZE;
+        std::cout << "BufferSize  " << b_hash_words.size() << std::endl;
+        std::cout << "Start  " << start << std::endl;
+        if (end + start >= N) {
+            end = N - start;
+        }
+        std::cout << "End " << sycl::range{end}.size() << std::endl;
+        //sycl::buffer<int> sub_buff(b_hash_words, start, sycl::range{end}); 
+        sycl::buffer<size_t> sub_buff(b_hash_words, start, sycl::range{end}); //base address alignment error
+        q.submit([&](sycl::handler& h){
+            sycl::accessor in{sub_buff, h, sycl::read_only};
+            h.parallel_for(WINDOW_SIZE, [=](sycl::id<1> i) {
+                int result = in[i] + 1;
+            });
+        }).wait();
+    }
+}
+
 
 int main(){
     std::string input_path = "./data/hamlet.txt";
@@ -42,8 +75,15 @@ int main(){
 
     // Windowed Serial Execution Steps
     auto start_serial = std::chrono::high_resolution_clock::now();
-    auto counts = count_words(hashed_words);
+    //auto counts = seq_count_words(hashed_words);
     auto end_serial = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> serial_count_duration = end_serial - start_serial;
-    printf("Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());
+    printf("Seq Count Words Duration:\t\t\t%f s\n", serial_count_duration.count());
+
+    // Windowed Parallel Execution Steps
+    auto start_par = std::chrono::high_resolution_clock::now();
+    sub_buffer_count_words(hashed_words);
+    auto end_par = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> par_count_duration = end_par - start_par;
+    printf("Parallel Count Words Duration:\t\t\t%f s\n", par_count_duration.count());
 }
