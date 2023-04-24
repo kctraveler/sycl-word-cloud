@@ -33,13 +33,13 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 - Had troulble using sub buffer of 2D to get a single dimension. 
     - Eliminated sub buffer and did global accessor. 
     - Reading sub buffer allows multiple queues to work on the buffer at the same time
-- Probably should make the use of a map on a filtered output on both
+
 
 ### Timing Results (CPU Node)
 | Interval | Time (Seconds) |
 | --- | --- |
 | Tokenize File | .009 |
-| Sequential Windowed* Count | 20.07 |
+| Sequential Windowed* Count | 15.821 |
 | Parallel Windowed* Count | 0.245 |
 \* WINDOW_SIZE = 10,000
 
@@ -58,6 +58,6 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 - [x] CLI (File path, max kernels)
 - [x] Identify further optimizations. Particularly result output
     - Working find with large output arrays with 4 windows at least
-- [ ] Update verision 2 seq to remove the map creation or add map creation to par
+- [x] Update verision 2 seq to remove the map creation or add map creation to par
 #### Data Analysis
 - [ ] Investigate Profiling tools (VTune)
