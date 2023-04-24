@@ -34,6 +34,7 @@ void sub_buffer_count_words(std::vector<int> int_hashed_words, int WINDOW_SIZE){
     // Got the error message below when trying to use vector of int after a few iterations. 
     // Commented lines related to the error that can be swapped to go back to int for future investigation.
     // Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment
+        // STILL GETTING ERROR at certain window sizes. May not have been data type afterall.
     std::vector<size_t> hashed_words(int_hashed_words.begin(), int_hashed_words.end()); // change back to size_t
     //std::vector<int> hashed_words{int_hashed_words.begin(), int_hashed_words.end() }; // base address alignment error
 

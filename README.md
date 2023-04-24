@@ -44,9 +44,13 @@ Implementation of the C++ word-cloud with SYCL and Intel oneAPI
 \* WINDOW_SIZE = 10,000
 
 ### Questions unanswered
-- Did it ever need subbuffers or could we have partitioned the range someother way. 
+- Did it ever need subbuffers or could we have partitioned the range someother way. (Partitioners?)
 - Could we have tried to do the input the same as the output. Would either option limit the ability for simultaneous kernals to process each window. 
 - Is their a chance that we are doing any simultaneous processing in current setup or is the q.submit blocking the outer loop. Probably is I would think. 
+- Why are there errors at certain window sizes pertaining to the memory base address alignment and sub buffer creation.
+    - Multiples of 10,000 seem to work well
+    - Interestingly the final section doesn't have issues and is an odd size
+- Are the start and ranges inclusive, are we missig any words when we partition the subbuffer?
 
 ## ToDo:
 #### Functionality
