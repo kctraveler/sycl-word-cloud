@@ -46,10 +46,9 @@ std::vector<std::vector<short>> seq_count_words(std::vector<int> hashed_words, i
 }
 
 void sub_buffer_count_words(std::vector<int> int_hashed_words, int WINDOW_SIZE){
-    // Got the error message below when trying to use vector of int after a few iterations. 
-    // Commented lines related to the error that can be swapped to go back to int for future investigation.
-    // Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment
-        // STILL GETTING ERROR at certain window sizes. May not have been data type afterall.
+    // Getting error below. Was introduced when I changed data type of buffer from size_t to int. With window size as a param, found that the error is not just related to data type but window size might be a bigger factor.
+    // "Specified offset of the sub-buffer being constructed is not a multiple of the memory base address alignment"
+    // Further testing reveals that power of 2 window size seems to work with wide success. Weird that 10,000 worked with size_t but 5,000 did not.
     std::vector<size_t> hashed_words(int_hashed_words.begin(), int_hashed_words.end()); // change back to size_t
     //std::vector<int> hashed_words{int_hashed_words.begin(), int_hashed_words.end() }; // base address alignment error
 
@@ -65,13 +64,14 @@ void sub_buffer_count_words(std::vector<int> int_hashed_words, int WINDOW_SIZE){
         size_t end = WINDOW_SIZE;
         std::cout << "Start  " << start << std::endl;
         // limits last window to remaining elements
+        // Why are the remainders here never an issue for address alignment?
         if (end + start >= N) {
             end = N - start;
         }
         std::cout << "Range Size " << end << std::endl;
         //sycl::buffer<int> sub_buff(b_hash_words, start, sycl::range{end}); //base address alignment error
         sycl::buffer<size_t> sub_buff(b_hash_words, start, sycl::range{end}); 
-        // Using a sub buffer here was causing errors and not writing back to the original or something.
+        // Using a sub buffer here was causing errors and not writing back to the original. Only the index 0 of outer dim was updated.
         //sycl::buffer<int, 2> sub_results(results, sycl::id{i, 0}, sycl::range{1, WORD_ID_RANGE});
         q.submit([&](sycl::handler& h){
             sycl::accessor in{sub_buff, h, sycl::read_only};
